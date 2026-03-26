@@ -1,0 +1,1210 @@
+<!doctype html>
+<html lang="ko" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Noto Sans KR', sans-serif; }
+    html, body, #app { height: 100%; }
+    
+    @keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse-strong { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+    @keyframes slide-in { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    
+    .animate-fade-up { animation: fade-up 0.5s ease-out forwards; }
+    .animate-pulse-strong { animation: pulse-strong 1s ease-in-out infinite; }
+    .animate-slide-in { animation: slide-in 0.3s ease-out; }
+    .animate-spin { animation: spin 1s linear infinite; }
+    
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+  <div id="app" class="h-full w-full overflow-auto flex flex-col"><!-- Header -->
+   <header class="sticky top-0 z-20 px-5 py-4 bg-gradient-to-b from-slate-900/95 to-slate-900/50 backdrop-blur-md border-b border-amber-600/20">
+    <div class="flex items-center justify-between mb-2">
+     <h1 id="appTitle" class="text-2xl font-bold" style="color: #fbbf24;">혈당 관리</h1>
+     <div class="flex gap-2"><button onclick="toggleHistory()" class="p-2.5 rounded-lg transition-colors" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;"> <i data-lucide="history" style="width:18px;height:18px;"></i> </button> <button onclick="toggleStats()" class="p-2.5 rounded-lg transition-colors" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;"> <i data-lucide="bar-chart-2" style="width:18px;height:18px;"></i> </button>
+     </div>
+    </div>
+    <p class="text-xs" style="color: #cbd5e1;">식전 혈당 입력 → 식사하기 → 2시간 후 식후 측정</p>
+   </header><!-- Main View -->
+   <div class="sticky top-16 z-10 px-5 py-3 bg-gradient-to-b from-slate-900/80 to-slate-900/30 backdrop-blur-sm border-b border-amber-600/10 space-y-2">
+    <p class="text-xs font-bold" style="color: #f59e0b;">오늘의 건강 습관</p>
+    <div class="flex gap-2 overflow-x-auto pb-1">
+     <button onclick="logHabitAction('water')" class="flex-shrink-0 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6;">💧 물 마시기</button> <button onclick="logHabitAction('walk')" class="flex-shrink-0 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap" style="background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e;">🚶 산책</button> <button onclick="logHabitAction('stretch')" class="flex-shrink-0 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap" style="background: rgba(168, 85, 247, 0.2); color: #a855f7; border: 1px solid #a855f7;">🧘 스트레칭</button> <button onclick="logHabitAction('sleep')" class="flex-shrink-0 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6; border: 1px solid #8b5cf6;">😴 충분한 수면</button>
+    </div>
+    <div id="habitCount" class="text-xs" style="color: #cbd5e1;">
+     오늘 실천: 0개
+    </div>
+   </div>
+   <div id="mainView" class="flex-1 overflow-auto px-5 py-6 pb-8">
+    <!-- Welcome Screen -->
+    <div id="welcomePhase" class="space-y-4">
+     <div class="rounded-2xl p-8 text-center animate-fade-up" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%); border: 2px solid #fbbf24;">
+      <div class="text-6xl mb-4 animate-pulse-strong">
+       📊
+      </div>
+      <h2 class="text-2xl font-bold mb-2" style="color: #fef3c7;">혈당 측정</h2>
+      <p class="text-sm mb-6" style="color: #cbd5e1;">식전 혈당을 입력하세요</p>
+      <div class="flex gap-3"><button onclick="startNFCRead()" class="flex-1 py-4 px-6 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all active:scale-95" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff;"> <i data-lucide="smartphone" style="width:24px;height:24px;"></i> NFC 읽기 </button> <button onclick="showInputPhase()" class="flex-1 py-4 px-6 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all active:scale-95" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #000;"> <i data-lucide="plus-circle" style="width:24px;height:24px;"></i> 수동 입력 </button>
+      </div>
+     </div>
+     <div class="rounded-2xl p-5" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(251, 191, 36, 0.2);">
+      <p class="text-xs font-bold mb-3" style="color: #f59e0b;">📋 측정 순서</p>
+      <div class="space-y-2 text-xs" style="color: #cbd5e1;">
+       <div class="flex items-start gap-2">
+        <span style="color: #fbbf24;">1️⃣</span> <span><strong>식전:</strong> 식사 직전 혈당 측정 입력</span>
+       </div>
+       <div class="flex items-start gap-2">
+        <span style="color: #fbbf24;">2️⃣</span> <span><strong>식사:</strong> 뭐든 자유롭게 드세요</span>
+       </div>
+       <div class="flex items-start gap-2">
+        <span style="color: #fbbf24;">3️⃣</span> <span><strong>식후:</strong> 2시간 후 알림 → 혈당 측정</span>
+       </div>
+       <div class="flex items-start gap-2">
+        <span style="color: #fbbf24;">🎯</span> <span><strong>목표:</strong> 식후 혈당 &lt; 140 mg/dL</span>
+       </div>
+      </div>
+     </div>
+    </div><!-- Input Phase -->
+    <div id="inputPhase" class="hidden space-y-4">
+     <div class="rounded-2xl p-6 animate-fade-up" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%); border: 2px solid #fbbf24;">
+      <h2 class="text-xl font-bold mb-6" style="color: #fef3c7;">🩸 식전 혈당 입력</h2>
+      <div class="mb-6"><label class="block text-sm font-bold mb-2" style="color: #cbd5e1;">식전 혈당 (mg/dL)</label> <input type="number" id="inputBefore" min="40" max="300" value="95" class="w-full px-4 py-3 rounded-lg text-center text-2xl font-bold" style="background: rgba(0,0,0,0.3); border: 2px solid #60a5fa; color: #60a5fa;">
+      </div>
+      <div class="flex gap-3"><button onclick="cancelInput()" class="flex-1 py-3 rounded-lg font-bold" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">취소</button> <button onclick="submitBeforeMeal()" class="flex-1 py-3 rounded-lg font-bold" style="background: #60a5fa; color: #fff;">다음 → 식사하기</button>
+      </div>
+     </div>
+    </div><!-- Meal Phase -->
+    <div id="mealPhase" class="hidden space-y-4">
+     <div class="rounded-2xl p-6 animate-fade-up" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%); border: 2px solid #fbbf24;">
+      <h2 class="text-xl font-bold mb-6" style="color: #fef3c7;">🍜 식사 내용 기록</h2>
+      <div class="mb-6">
+       <p class="text-sm font-bold mb-3" style="color: #cbd5e1;">무엇을 드셨나요? (선택사항)</p><input type="text" id="mealInput" placeholder="예: 흰쌀밥, 계란후라이, 국" class="w-full px-4 py-3 rounded-lg text-sm" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(251, 191, 36, 0.2); color: #fef3c7;">
+      </div>
+      <div class="mb-4 p-3 rounded-lg text-xs font-bold" style="background: rgba(251, 191, 36, 0.1); color: #f59e0b; border: 1px solid rgba(251, 191, 36, 0.3);">
+       ⏰ 식사 시작: <span id="mealStartDisplay">--:--</span><br>
+        📍 2시간 후 알림을 받을 예정입니다
+      </div>
+      <div class="flex gap-3"><button onclick="cancelMealPhase()" class="flex-1 py-3 rounded-lg font-bold" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">돌아가기</button> <button onclick="confirmMealPhase()" class="flex-1 py-3 rounded-lg font-bold" style="background: #fbbf24; color: #000;">식사 시작 ✓</button>
+      </div>
+     </div>
+    </div><!-- After Phase -->
+    <div id="afterPhase" class="hidden space-y-4">
+     <div class="rounded-2xl p-6 animate-fade-up" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%); border: 2px solid #fbbf24;">
+      <h2 class="text-xl font-bold mb-6" style="color: #fef3c7;">📈 식후 혈당 측정</h2>
+      <div class="mb-4 p-3 rounded-lg text-xs font-bold" style="background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3);">
+       ✓ 식전 혈당: <span id="afterDisplayBefore">--</span> mg/dL<br>
+        경과 시간: <span id="elapsedTime">0분</span>
+      </div>
+      <div class="mb-6"><label class="block text-sm font-bold mb-2" style="color: #cbd5e1;">식후 혈당 (mg/dL)</label> <input type="number" id="inputAfter" min="40" max="400" value="145" class="w-full px-4 py-3 rounded-lg text-center text-2xl font-bold" style="background: rgba(0,0,0,0.3); border: 2px solid #ef4444; color: #ef4444;">
+      </div>
+      <div class="flex gap-3"><button onclick="cancelAfterPhase()" class="flex-1 py-3 rounded-lg font-bold" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">돌아가기</button> <button onclick="submitAfterMeal()" class="flex-1 py-3 rounded-lg font-bold" style="background: #fbbf24; color: #000;">분석하기</button>
+      </div>
+     </div>
+    </div><!-- NFC Reading -->
+    <div id="nfcReadingPhase" class="hidden space-y-4">
+     <div class="rounded-2xl p-8 text-center animate-fade-up" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%); border: 2px solid #3b82f6;">
+      <div class="text-6xl mb-4 animate-spin">
+       📱
+      </div>
+      <h2 class="text-2xl font-bold mb-2" style="color: #fef3c7;">NFC 태그 읽는 중...</h2>
+      <p class="text-sm mb-6" style="color: #cbd5e1;">휴대폰을 NFC 태그에 접근시키세요</p><button onclick="cancelNFCRead()" class="w-full py-3 rounded-lg font-bold" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">취소</button>
+     </div>
+    </div><!-- NFC Confirm -->
+    <div id="nfcConfirmPhase" class="hidden space-y-4">
+     <div class="rounded-2xl p-6 animate-fade-up" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%); border: 2px solid #3b82f6;">
+      <h2 class="text-xl font-bold mb-6" style="color: #fef3c7;">📱 NFC 식전 혈당</h2>
+      <div class="mb-6">
+       <label class="block text-sm font-bold mb-2" style="color: #cbd5e1;">🩸 식전 혈당 (mg/dL)</label> <input type="number" id="nfcBefore" min="40" max="300" class="w-full px-4 py-3 rounded-lg text-center text-2xl font-bold" style="background: rgba(0,0,0,0.3); border: 2px solid #60a5fa; color: #60a5fa;">
+      </div>
+      <div class="flex gap-3">
+       <button onclick="cancelNFCConfirm()" class="flex-1 py-3 rounded-lg font-bold" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa;">취소</button> <button onclick="confirmNFCData()" class="flex-1 py-3 rounded-lg font-bold" style="background: #3b82f6; color: #fff;">다음 → 식사하기</button>
+      </div>
+     </div>
+    </div><!-- Result Analysis -->
+    <div id="resultPhase" class="hidden space-y-4">
+     <div id="riseAlert" class="rounded-2xl p-6 text-center animate-fade-up" style="border: 2px solid #ef4444;">
+      <div class="grid grid-cols-3 gap-3 mb-6">
+       <div class="rounded-xl p-3" style="background: rgba(255,255,255,0.03);">
+        <p class="text-xs font-bold mb-1" style="color: #cbd5e1;">식전</p>
+        <p class="text-2xl font-black" id="glucoseBefore" style="color: #60a5fa;">--</p>
+       </div>
+       <div class="flex items-center justify-center">
+        <i data-lucide="arrow-right" style="width:24px;height:24px;color:#ef4444;"></i>
+       </div>
+       <div class="rounded-xl p-3" style="background: rgba(255,255,255,0.03);">
+        <p class="text-xs font-bold mb-1" style="color: #cbd5e1;">식후</p>
+        <p class="text-2xl font-black" id="glucoseAfter" style="color: #ef4444;">--</p>
+       </div>
+      </div>
+      <div class="mb-6">
+       <p class="text-xs font-bold mb-2" style="color: #cbd5e1;">혈당 상승폭</p>
+       <div class="flex items-baseline gap-2 justify-center">
+        <p class="text-5xl font-black" id="glucoseRise" style="color: #ef4444;">--</p>
+        <p class="text-lg font-bold" style="color: #ef4444;">mg/dL</p>
+       </div>
+      </div>
+      <div id="riskBadge" class="inline-block px-4 py-2 rounded-full font-bold text-sm" style="background: #ef4444; color: #fff;">
+       높은 위험
+      </div>
+     </div>
+     <div id="categoryInfo" class="rounded-xl p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(251, 191, 36, 0.2);">
+      <p class="text-xs font-bold mb-2" style="color: #f59e0b;">📊 혈당 관리 기준</p>
+      <p id="categoryText" class="text-sm" style="color: #fef3c7;"></p>
+     </div>
+     <div id="exerciseRecommendation" class="rounded-xl p-5 animate-fade-up" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%); border: 2px solid #3b82f6;">
+      <div class="flex items-start gap-3 mb-3"><span style="font-size: 28px;" id="exerciseIcon">🏃</span>
+       <div class="flex-1">
+        <p class="font-bold mb-1" style="color: #fbbf24;" id="exerciseType">운동 추천</p>
+        <p class="text-xs mb-2" style="color: #cbd5e1;" id="exerciseDuration">--</p>
+        <p class="text-xs mb-3" style="color: #e0e7ff;" id="exerciseDetail">--</p>
+        <div class="flex gap-2"><span class="text-xs px-2 py-1 rounded" style="background: rgba(59, 130, 246, 0.3); color: #60a5fa;">⏱ <span id="exerciseTiming">--</span></span> <span class="text-xs px-2 py-1 rounded" style="background: rgba(59, 130, 246, 0.3); color: #60a5fa;">💪 <span id="exerciseIntensity">--</span></span>
+        </div>
+       </div>
+      </div>
+     </div>
+     <div id="dietRecommendation" class="rounded-xl p-5 animate-fade-up" style="background: linear-gradient(135deg, rgba(251, 146, 60, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%); border: 2px solid #fb923c;">
+      <div class="flex items-start gap-3"><span style="font-size: 28px;">🥗</span>
+       <div class="flex-1">
+        <p class="font-bold mb-1" style="color: #fbbf24;" id="dietType">식단 추천</p>
+        <p class="text-xs mb-2" style="color: #e0e7ff;" id="dietReduction">30-40% 감소 권장</p>
+        <p class="text-xs mb-3" style="color: #cbd5e1;" id="dietDetail">--</p>
+        <div id="dietTipsContainer" class="space-y-1 mb-3"></div>
+        <div class="pt-2" style="border-top: 1px solid rgba(251, 146, 60, 0.3);">
+         <p class="text-xs font-bold mb-1" style="color: #fbbf24;">⚠️ 피하세요</p>
+         <div id="avoidFoodsList" class="text-xs mb-2" style="color: #cbd5e1;"></div>
+         <p class="text-xs font-bold mb-1" style="color: #fbbf24;">✅ 권장 음식</p>
+         <div id="preferFoodsList" class="text-xs" style="color: #cbd5e1;"></div>
+        </div>
+       </div>
+      </div>
+     </div>
+     <div id="insightsBox" class="rounded-xl p-4" style="background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.3);">
+      <p class="text-xs font-bold mb-2" style="color: #f59e0b;">💡 분석 결과</p>
+      <p id="insightText" class="text-sm" style="color: #fef3c7;">분석 중...</p>
+     </div><button onclick="saveRecord()" class="w-full py-3 rounded-lg font-bold" style="background: #fbbf24; color: #000;">💾 기록 저장</button> <button onclick="resetMeasure()" class="w-full py-3 rounded-lg font-bold" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">+ 다시 측정</button>
+    </div>
+   </div><!-- History View -->
+   <div id="historyView" class="hidden flex-1 overflow-auto px-5 py-6 pb-8">
+    <div class="flex items-center justify-between mb-4 sticky top-0 z-10 -mx-5 px-5 py-3 bg-gradient-to-b from-slate-900 to-transparent">
+     <h2 class="text-lg font-bold" style="color: #fef3c7;">📋 측정 기록</h2><button onclick="toggleHistory()" class="px-3 py-1 rounded-lg text-sm font-bold" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">닫기</button>
+    </div>
+    <div id="historyList" class="space-y-2"></div>
+    <p id="emptyHistoryMsg" class="text-center py-12 text-sm" style="color: #cbd5e1;">아직 측정 기록이 없습니다</p>
+   </div><!-- Stats View -->
+   <div id="statsView" class="hidden flex-1 overflow-auto px-5 py-6 pb-8">
+    <div class="flex items-center justify-between mb-4 sticky top-0 z-10 -mx-5 px-5 py-3 bg-gradient-to-b from-slate-900 to-transparent">
+     <h2 class="text-lg font-bold" style="color: #fef3c7;">📊 통계</h2><button onclick="toggleStats()" class="px-3 py-1 rounded-lg text-sm font-bold" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">닫기</button>
+    </div>
+    <div class="space-y-3">
+     <div class="rounded-xl p-4 animate-fade-up" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%); border: 2px solid #3b82f6;">
+      <p class="text-xs font-bold mb-4" style="color: #f59e0b;">📈 혈당 추이 (최근 10개)</p>
+      <div style="width: 100%; height: 200px; position: relative; margin-bottom: 8px; background: rgba(255,255,255,0.02); border-radius: 8px; overflow: hidden;">
+       <canvas id="glucoseChart"></canvas>
+      </div>
+      <div class="flex gap-2 justify-center text-xs flex-wrap">
+       <div class="flex items-center gap-1">
+        <div style="width: 3px; height: 3px; background: #60a5fa; border-radius: 50%;"></div><span style="color: #cbd5e1;">식전</span>
+       </div>
+       <div class="flex items-center gap-1">
+        <div style="width: 3px; height: 3px; background: #ef4444; border-radius: 50%;"></div><span style="color: #cbd5e1;">식후</span>
+       </div>
+       <div class="flex items-center gap-1">
+        <div style="width: 3px; height: 3px; background: #22c55e; border-radius: 50%;"></div><span style="color: #cbd5e1;">목표선 (140)</span>
+       </div>
+      </div>
+     </div>
+     <div class="rounded-xl p-4 animate-fade-up" style="background: linear-gradient(135deg, rgba(251, 146, 60, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%); border: 2px solid #fb923c;">
+      <p class="text-xs font-bold mb-4" style="color: #f59e0b;">📊 혈당 상승폭 추이</p>
+      <div style="width: 100%; height: 160px; position: relative; margin-bottom: 8px; background: rgba(255,255,255,0.02); border-radius: 8px; overflow: hidden;">
+       <canvas id="riseChart"></canvas>
+      </div>
+      <p class="text-xs" style="color: #cbd5e1; text-align: center;">목표: 50mg/dL 이하</p>
+     </div>
+     <div class="rounded-xl p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(251, 191, 36, 0.2);">
+      <p class="text-xs font-bold mb-3" style="color: #f59e0b;">📈 평균 혈당 상승폭</p>
+      <p class="text-3xl font-black" id="avgRise" style="color: #fbbf24;">-- mg/dL</p>
+      <p class="text-xs mt-2" style="color: #cbd5e1;" id="riseStatus">--</p>
+     </div>
+     <div class="rounded-xl p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(251, 191, 36, 0.2);">
+      <p class="text-xs font-bold mb-3" style="color: #f59e0b;">🎯 목표 달성률</p>
+      <div class="flex items-baseline gap-2 mb-2">
+       <p class="text-3xl font-black" id="achievementRate" style="color: #fbbf24;">--%</p>
+      </div>
+      <div class="w-full h-2 rounded-full" style="background: rgba(255,255,255,0.1);">
+       <div id="achievementBar" class="h-full rounded-full transition-all" style="background: #22c55e; width: 0%;"></div>
+      </div>
+      <p class="text-xs mt-2" style="color: #cbd5e1;">목표: 식후 혈당 140 mg/dL 이하</p>
+     </div>
+     <div class="rounded-xl p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(251, 191, 36, 0.2);">
+      <p class="text-xs font-bold mb-3" style="color: #f59e0b;">📊 위험도 분포</p>
+      <div id="riskDistribution" class="space-y-2">
+       <div class="flex items-center gap-2">
+        <div style="width: 60px; font-size: 11px; color: #cbd5e1;">
+         🟢 낮음
+        </div>
+        <div class="flex-1 h-2 rounded-full" style="background: rgba(255,255,255,0.1);">
+         <div id="riskLowBar" class="h-full rounded-full" style="background: #22c55e; width: 0%;"></div>
+        </div>
+        <div style="width: 30px; text-align: right; font-size: 11px; color: #cbd5e1;" id="riskLowCount">
+         0
+        </div>
+       </div>
+       <div class="flex items-center gap-2">
+        <div style="width: 60px; font-size: 11px; color: #cbd5e1;">
+         🟡 중간
+        </div>
+        <div class="flex-1 h-2 rounded-full" style="background: rgba(255,255,255,0.1);">
+         <div id="riskMediumBar" class="h-full rounded-full" style="background: #f59e0b; width: 0%;"></div>
+        </div>
+        <div style="width: 30px; text-align: right; font-size: 11px; color: #cbd5e1;" id="riskMediumCount">
+         0
+        </div>
+       </div>
+       <div class="flex items-center gap-2">
+        <div style="width: 60px; font-size: 11px; color: #cbd5e1;">
+         🔴 높음
+        </div>
+        <div class="flex-1 h-2 rounded-full" style="background: rgba(255,255,255,0.1);">
+         <div id="riskHighBar" class="h-full rounded-full" style="background: #ef4444; width: 0%;"></div>
+        </div>
+        <div style="width: 30px; text-align: right; font-size: 11px; color: #cbd5e1;" id="riskHighCount">
+         0
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="rounded-xl p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(251, 191, 36, 0.2);">
+      <p class="text-xs font-bold mb-3" style="color: #f59e0b;">📝 총 기록 건수</p>
+      <p class="text-3xl font-black" id="totalRecords" style="color: #fbbf24;">0</p>
+     </div>
+    </div>
+   </div>
+  </div><!-- Delete Confirmation -->
+  <div id="deleteConfirm" class="fixed inset-0 z-40 hidden flex items-center justify-center" style="background: rgba(0,0,0,0.8);">
+   <div class="rounded-2xl p-6 mx-6 w-full max-w-xs animate-fade-up" style="background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border: 2px solid #fbbf24;">
+    <p class="text-sm font-bold mb-4" style="color: #fef3c7;">이 기록을 삭제하시겠습니까?</p>
+    <div class="flex gap-3"><button onclick="cancelDelete()" class="flex-1 py-2.5 rounded-lg font-bold text-sm" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">취소</button> <button onclick="confirmDelete()" class="flex-1 py-2.5 rounded-lg font-bold text-sm" style="background: #ef4444; color: #fff;">삭제</button>
+    </div>
+   </div>
+  </div><!-- Toast -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full text-sm font-bold hidden z-50" style="background: #fbbf24; color: #000;"></div>
+  <script>
+const defaultConfig = { app_title: '혈당 관리' };
+
+let measurement = { before: null, after: null, timestamp: null };
+let allRecords = [];
+let deleteTarget = null;
+let actionsCompleted = [];
+let todayHabits = {};
+let mealStartTime = null;
+let notificationShown = false;
+let updateElapsedTimeInterval = null;
+let nfcAbortController = null;
+
+// ============ HABIT TRACKING ============
+
+function logHabitAction(habitType) {
+  const today = new Date().toDateString();
+  const habitKey = `${today}-${habitType}`;
+  
+  if (!todayHabits[habitKey]) {
+    todayHabits[habitKey] = 0;
+  }
+  todayHabits[habitKey]++;
+
+  const habitLabels = {
+    water: '💧 물 마시기',
+    walk: '🚶 산책',
+    stretch: '🧘 스트레칭',
+    sleep: '😴 충분한 수면'
+  };
+
+  const count = todayHabits[habitKey];
+  const messages = {
+    water: ['물을 마셨어요!', '좋아요! 수분 섭취 👏', '계속 이대로! 💪', '주목! 수분 관리 챔피언 🌟'],
+    walk: ['산책했어요!', '훌륭해! 운동 중 🏃', '정말 멋있어! 💫', '운동의 신이시네요! 🏆'],
+    stretch: ['스트레칭했어요!', '유연성 최고! 🧘', '근육이 감사해요! 💪', '스트레칭 마스터! 🥇'],
+    sleep: ['좋은 수면!', '피로 회복 중 😴', '충분한 휴식! ✨', '건강 100점! 🌙']
+  };
+
+  const msgArray = messages[habitType];
+  const msg = msgArray[Math.min(count - 1, msgArray.length - 1)];
+
+  showCelebration(msg, habitLabels[habitType]);
+  updateHabitCount();
+}
+
+function showCelebration(message, habit) {
+  const toast = document.getElementById('toast');
+  toast.innerHTML = `<div class="text-center"><div style="font-size: 18px; margin-bottom: 4px;">🎉</div>${message}</div>`;
+  toast.style.background = 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)';
+  toast.style.color = '#000';
+  toast.classList.remove('hidden');
+  
+  setTimeout(() => toast.classList.add('hidden'), 2500);
+}
+
+function updateHabitCount() {
+  const today = new Date().toDateString();
+  let count = 0;
+  for (const key in todayHabits) {
+    if (key.startsWith(today)) {
+      count += todayHabits[key];
+    }
+  }
+  document.getElementById('habitCount').textContent = `오늘 실천: ${count}개 ${count > 0 ? '🌟' : ''}`;
+}
+
+// ============ WEB NFC API ============
+
+async function startNFCRead() {
+  if (!('NDEFReader' in window)) {
+    showToast('⚠️ 이 기기는 NFC를 지원하지 않습니다');
+    setTimeout(() => showInputPhase(), 1500);
+    return;
+  }
+
+  document.getElementById('welcomePhase').classList.add('hidden');
+  document.getElementById('nfcReadingPhase').classList.remove('hidden');
+
+  nfcAbortController = new AbortController();
+
+  try {
+    const ndef = new NDEFReader();
+    await ndef.scan({ signal: nfcAbortController.signal });
+
+    ndef.onreading = (event) => {
+      handleNFCReading(event);
+    };
+
+    ndef.onerror = () => {
+      showToast('❌ NFC 읽기 실패');
+      cancelNFCRead();
+    };
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      return;
+    }
+    // NFC 권한 거부 또는 기기 미지원 시 수동 입력으로 폴백
+    showToast('⚠️ NFC 접근 불가 → 수동 입력으로 변경');
+    setTimeout(() => {
+      cancelNFCRead();
+      showInputPhase();
+    }, 1500);
+  }
+}
+
+function handleNFCReading(event) {
+  const decoder = new TextDecoder();
+  let glucoseValue = null;
+
+  for (const record of event.message.records) {
+    if (record.recordType === 'text') {
+      const text = decoder.decode(record.data);
+      const match = text.match(/(\d+)/);
+      if (match) {
+        glucoseValue = parseInt(match[1]);
+        break;
+      }
+    } else if (record.recordType === 'url') {
+      const url = decoder.decode(record.data).substring(1);
+      const match = url.match(/glucose[=:](\d+)/i);
+      if (match) {
+        glucoseValue = parseInt(match[1]);
+        break;
+      }
+    }
+  }
+
+  if (glucoseValue && glucoseValue >= 40 && glucoseValue <= 300) {
+    nfcAbortController.abort();
+    document.getElementById('nfcReadingPhase').classList.add('hidden');
+    document.getElementById('nfcBefore').value = glucoseValue;
+    document.getElementById('nfcConfirmPhase').classList.remove('hidden');
+    showToast('✓ NFC 읽음: ' + glucoseValue);
+  } else {
+    showToast('⚠️ 유효한 혈당 데이터가 없습니다');
+  }
+}
+
+function cancelNFCRead() {
+  if (nfcAbortController) {
+    nfcAbortController.abort();
+  }
+  document.getElementById('nfcReadingPhase').classList.add('hidden');
+  document.getElementById('welcomePhase').classList.remove('hidden');
+}
+
+function cancelNFCConfirm() {
+  document.getElementById('nfcConfirmPhase').classList.add('hidden');
+  document.getElementById('welcomePhase').classList.remove('hidden');
+  measurement = { before: null, after: null, timestamp: null };
+}
+
+function confirmNFCData() {
+  const before = parseInt(document.getElementById('nfcBefore').value);
+
+  if (isNaN(before) || before < 40 || before > 300) {
+    showToast('⚠️ 식전: 40~300 범위로 입력하세요');
+    return;
+  }
+
+  measurement.before = before;
+  measurement.timestamp = new Date().toISOString();
+  document.getElementById('nfcConfirmPhase').classList.add('hidden');
+  mealStartTime = new Date();
+  notificationShown = false;
+  
+  const hours = mealStartTime.getHours().toString().padStart(2, '0');
+  const minutes = mealStartTime.getMinutes().toString().padStart(2, '0');
+  document.getElementById('mealStartDisplay').textContent = `${hours}:${minutes}`;
+  document.getElementById('mealInput').value = '';
+  
+  document.getElementById('mealPhase').classList.remove('hidden');
+  schedulePostMealNotification();
+}
+
+// ============ INPUT FLOW ============
+
+function showInputPhase() {
+  document.getElementById('welcomePhase').classList.add('hidden');
+  document.getElementById('inputPhase').classList.remove('hidden');
+  document.getElementById('inputBefore').value = '95';
+}
+
+function cancelInput() {
+  document.getElementById('inputPhase').classList.add('hidden');
+  document.getElementById('welcomePhase').classList.remove('hidden');
+}
+
+function submitBeforeMeal() {
+  const before = parseInt(document.getElementById('inputBefore').value);
+
+  if (isNaN(before) || before < 40 || before > 300) {
+    showToast('⚠️ 식전: 40~300 범위로 입력하세요');
+    return;
+  }
+
+  measurement.before = before;
+  measurement.timestamp = new Date().toISOString();
+  
+  document.getElementById('inputPhase').classList.add('hidden');
+  mealStartTime = new Date();
+  notificationShown = false;
+  
+  const hours = mealStartTime.getHours().toString().padStart(2, '0');
+  const minutes = mealStartTime.getMinutes().toString().padStart(2, '0');
+  document.getElementById('mealStartDisplay').textContent = `${hours}:${minutes}`;
+  document.getElementById('mealInput').value = '';
+  
+  document.getElementById('mealPhase').classList.remove('hidden');
+  schedulePostMealNotification();
+}
+
+function cancelMealPhase() {
+  mealStartTime = null;
+  notificationShown = false;
+  document.getElementById('mealPhase').classList.add('hidden');
+  document.getElementById('inputPhase').classList.remove('hidden');
+  document.getElementById('inputBefore').value = measurement.before || '95';
+}
+
+function confirmMealPhase() {
+  document.getElementById('mealPhase').classList.add('hidden');
+  document.getElementById('afterDisplayBefore').textContent = measurement.before;
+  document.getElementById('inputAfter').value = '145';
+  
+  clearInterval(updateElapsedTimeInterval);
+  updateElapsedTimeInterval = setInterval(() => {
+    if (!mealStartTime) {
+      clearInterval(updateElapsedTimeInterval);
+      return;
+    }
+    const elapsed = Math.floor((new Date() - mealStartTime) / 60000);
+    document.getElementById('elapsedTime').textContent = elapsed + '분';
+  }, 10000);
+  
+  document.getElementById('afterPhase').classList.remove('hidden');
+}
+
+function cancelAfterPhase() {
+  document.getElementById('afterPhase').classList.add('hidden');
+  document.getElementById('mealPhase').classList.remove('hidden');
+}
+
+function submitAfterMeal() {
+  const after = parseInt(document.getElementById('inputAfter').value);
+
+  if (isNaN(after) || after < 40 || after > 400) {
+    showToast('⚠️ 식후: 40~400 범위로 입력하세요');
+    return;
+  }
+
+  measurement.after = after;
+  document.getElementById('afterPhase').classList.add('hidden');
+  analyzeResult();
+}
+
+// ============ AI ANALYSIS ENGINE ============
+
+function analyzeResult() {
+  const rise = measurement.after - measurement.before;
+
+  let riskLevel = 'low';
+  let category = '';
+  
+  if (measurement.after >= 180) {
+    riskLevel = 'very_high';
+    category = '혈당 조절 불량';
+  } else if (measurement.after >= 140) {
+    riskLevel = 'high';
+    category = '혈당 조절 미흡';
+  } else if (measurement.after >= 100) {
+    riskLevel = 'medium';
+    category = '혈당 정상 범위 상단';
+  } else {
+    riskLevel = 'low';
+    category = '혈당 정상';
+  }
+
+  document.getElementById('glucoseBefore').textContent = measurement.before;
+  document.getElementById('glucoseAfter').textContent = measurement.after;
+  document.getElementById('glucoseRise').textContent = rise;
+
+  const riskInfo = getRiskInfo(riskLevel);
+  document.getElementById('riseAlert').style.borderColor = riskInfo.color;
+  document.getElementById('riseAlert').style.background = 'linear-gradient(135deg, rgba(' + hexToRgb(riskInfo.color).join(',') + ',0.1) 0%, rgba(' + hexToRgb(riskInfo.color).join(',') + ',0.05) 100%)';
+  document.getElementById('riskBadge').textContent = riskInfo.label;
+  document.getElementById('riskBadge').style.background = riskInfo.color;
+
+  document.getElementById('categoryText').textContent = category + ` - 목표: 식후 < 140 mg/dL (현재 ${measurement.after} mg/dL)`;
+  
+  const aiInsight = generateAIInsight(rise, riskLevel, measurement.before, measurement.after);
+  document.getElementById('insightText').textContent = aiInsight;
+
+  displayExerciseRecommendation(getPersonalizedExerciseRecommendation(riskLevel));
+  displayDietRecommendation(getPersonalizedDietRecommendation(riskLevel, rise));
+
+  document.getElementById('resultPhase').classList.remove('hidden');
+  document.getElementById('welcomePhase').classList.add('hidden');
+
+  actionsCompleted = [];
+  showToast('✓ 분석 완료');
+}
+
+function generateAIInsight(rise, riskLevel, before, after) {
+  if (rise > 100) {
+    return `💢 심한 혈당 급상승(${rise}mg/dL)! 식후 즉시 산책(20분)과 물 섭취가 필수입니다. 다음 식사에서 흰쌀밥, 국수 같은 정제 탄수화물을 피하세요.`;
+  } else if (rise > 50) {
+    return `📊 적당한 혈당 상승(${rise}mg/dL). 식후 10분 산책으로 혈당을 더 안정적으로 관리할 수 있습니다. 식단에 더 많은 섬유질을 추가하세요.`;
+  } else {
+    return `✅ 우수한 혈당 관리(${rise}mg/dL). 지금의 좋은 상태를 유지하세요. 규칙적인 식사와 운동을 계속하면 더 나아질 거예요!`;
+  }
+}
+
+function getPersonalizedExerciseRecommendation(riskLevel) {
+  if (riskLevel === 'very_high') {
+    return {
+      type: '🏃 빠른 산책',
+      duration: '20분 이상',
+      intensity: 'high',
+      timing: '식후 5분 내',
+      detail: '매우 높은 혈당입니다. 즉시 빠르게 산책하세요. 근력운동은 혈당 저하에 효과적입니다.',
+      icon: '🚶‍♂️'
+    };
+  } else if (riskLevel === 'high') {
+    return {
+      type: '🚶 가벼운 산책',
+      duration: '15분',
+      intensity: 'light',
+      timing: '식후 10분 내',
+      detail: '혈당이 높습니다. 식후 15분 산책으로 혈당 상승을 20-30mg/dL 완화할 수 있습니다.',
+      icon: '🌳'
+    };
+  } else if (riskLevel === 'medium') {
+    return {
+      type: '🧘 스트레칭',
+      duration: '10분',
+      intensity: 'very_light',
+      timing: '식후 15분 내',
+      detail: '정상 범위 상단입니다. 가벼운 스트레칭이나 5-10분 산책으로 충분합니다.',
+      icon: '🧘‍♀️'
+    };
+  }
+  return {
+    type: '✅ 유지 모드',
+    duration: '일반 활동',
+    intensity: 'light',
+    timing: '평소대로',
+    detail: '혈당 관리가 잘 되고 있습니다! 지금의 건강한 습관을 유지하세요.',
+    icon: '🎯'
+  };
+}
+
+function getPersonalizedDietRecommendation(riskLevel, rise) {
+  if (riskLevel === 'very_high' || riskLevel === 'high') {
+    return {
+      type: '🥗 탄수화물 제한',
+      reduction: '30-40% 감소',
+      detail: '흰쌀밥 대신 현미, 보리쌀을 드세요. 국수나 식빵은 피하고 채소+단백질 중심으로 먹으세요.',
+      avoid: ['흰쌀밥', '국수', '식빵'],
+      prefer: ['현미', '보리쌀', '채소'],
+      tips: ['🍚 흰쌀밥 → 현미/보리쌀', '🍞 정제 탄수화물 피하기', '🥬 채소 양 2배', '🍗 단백질 증가']
+    };
+  } else if (riskLevel === 'medium') {
+    return {
+      type: '⚖️ 균형식 유지',
+      reduction: '10-20% 감소',
+      detail: '현재 식단에 조금의 조정만 필요합니다. 채소를 조금 더 추가하고 단백질을 적정량 유지하세요.',
+      avoid: [],
+      prefer: ['채소', '단백질', '통곡물'],
+      tips: ['🥘 현재 식단 유지', '🥗 채소 조금 더', '🍗 단백질 유지', '💧 수분 섭취']
+    };
+  }
+
+  return {
+    type: '✅ 최적 식단',
+    reduction: '유지',
+    detail: '현재 식습관이 훌륭합니다! 계속 유지하면서 다양한 음식을 시도해보세요.',
+    avoid: [],
+    prefer: ['모든 건강 음식'],
+    tips: ['🎉 지금의 식습관 유지', '📊 계속 기록하기', '🥗 다양한 음식', '🚶 규칙적 운동']
+  };
+}
+
+function getRiskInfo(level) {
+  const info = {
+    very_high: { label: '🔴 혈당 조절 불량', color: '#ef4444' },
+    high: { label: '🟠 혈당 조절 미흡', color: '#f97316' },
+    medium: { label: '🟡 혈당 정상 상단', color: '#eab308' },
+    low: { label: '🟢 혈당 정상', color: '#22c55e' }
+  };
+  return info[level] || info.medium;
+}
+
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : [251, 191, 36];
+}
+
+function displayExerciseRecommendation(rec) {
+  const intensityMap = { very_light: '가벼움', light: '보통', moderate: '중간', high: '높음' };
+  
+  document.getElementById('exerciseIcon').textContent = rec.icon;
+  document.getElementById('exerciseType').textContent = rec.type;
+  document.getElementById('exerciseDuration').textContent = `⏱ ${rec.duration}`;
+  document.getElementById('exerciseDetail').textContent = rec.detail;
+  document.getElementById('exerciseTiming').textContent = rec.timing;
+  document.getElementById('exerciseIntensity').textContent = intensityMap[rec.intensity] || '보통';
+}
+
+function displayDietRecommendation(rec) {
+  document.getElementById('dietType').textContent = rec.type;
+  document.getElementById('dietReduction').textContent = `📊 ${rec.reduction}`;
+  document.getElementById('dietDetail').textContent = rec.detail;
+
+  const tipsContainer = document.getElementById('dietTipsContainer');
+  tipsContainer.innerHTML = rec.tips.map(tip => 
+    `<div class="text-xs px-2 py-1 rounded" style="background: rgba(251, 146, 60, 0.2); color: #fef3c7;">${tip}</div>`
+  ).join('');
+
+  const avoidList = document.getElementById('avoidFoodsList');
+  avoidList.innerHTML = (rec.avoid && rec.avoid.length > 0) 
+    ? rec.avoid.map(food => `<div>• ${food}</div>`).join('')
+    : '<div>• 급격한 혈당 상승 음식 피하기</div>';
+
+  const preferList = document.getElementById('preferFoodsList');
+  preferList.innerHTML = (rec.prefer && rec.prefer.length > 0)
+    ? rec.prefer.map(food => `<div>✓ ${food}</div>`).join('')
+    : '<div>✓ 건강한 음식 권장</div>';
+}
+
+async function saveRecord() {
+  if (!measurement.before || !measurement.after) return;
+
+  const rise = measurement.after - measurement.before;
+  const risePercent = Math.round((rise / measurement.before) * 100);
+  
+  let riskLevel = 'low';
+  if (measurement.after >= 180) riskLevel = 'very_high';
+  else if (measurement.after >= 140) riskLevel = 'high';
+  else if (measurement.after >= 100) riskLevel = 'medium';
+
+  const meal = document.getElementById('mealInput').value || '기록 없음';
+
+  const record = {
+    glucose_before: measurement.before,
+    glucose_after: measurement.after,
+    glucose_rise: rise,
+    rise_percentage: risePercent,
+    risk_level: riskLevel,
+    meal_type: meal,
+    timestamp: measurement.timestamp
+  };
+
+  allRecords.unshift(record);
+  saveRecordsToLocal();
+  showToast('💾 기록 저장됨');
+  mealStartTime = null;
+  notificationShown = false;
+  clearInterval(updateElapsedTimeInterval);
+  renderHistory();
+  updateStats();
+  resetMeasure();
+}
+
+function schedulePostMealNotification() {
+  const fifteenMinutesInMs = 15 * 60 * 1000;
+  
+  const notificationTimer = setInterval(() => {
+    if (!mealStartTime || notificationShown) {
+      clearInterval(notificationTimer);
+      return;
+    }
+    
+    const now = new Date();
+    const elapsedTime = now - mealStartTime;
+    
+    if (elapsedTime >= fifteenMinutesInMs) {
+      notificationShown = true;
+      showPostMealNotification();
+      clearInterval(notificationTimer);
+    }
+  }, 10000);
+}
+
+function showPostMealNotification() {
+  const notif = document.createElement('div');
+  notif.id = 'postMealNotification';
+  notif.innerHTML = `
+    <div style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 12px; padding: 16px 20px; box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3); color: #000; font-weight: bold; max-width: 90%; animation: fade-up 0.4s ease-out;">
+      <div style="display: flex; align-items: center; gap: 12px; font-size: 14px;">
+        <span style="font-size: 24px;">⏰</span>
+        <div>
+          <div style="font-weight: 700;">식후 15분이 되었습니다!</div>
+          <div style="font-size: 12px; opacity: 0.9; margin-top: 4px;">혈당을 측정하고 분석해보세요</div>
+        </div>
+        <button onclick="dismissPostMealNotif()" style="margin-left: auto; background: rgba(0,0,0,0.2); border: none; color: #000; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">닫기</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(notif);
+  
+  setTimeout(() => {
+    const elem = document.getElementById('postMealNotification');
+    if (elem) {
+      elem.style.opacity = '0';
+      elem.style.transform = 'translateX(-50%) translateY(-100%)';
+      elem.style.transition = 'all 0.3s ease-out';
+      setTimeout(() => elem.remove(), 300);
+    }
+  }, 10000);
+}
+
+function dismissPostMealNotif() {
+  const elem = document.getElementById('postMealNotification');
+  if (elem) {
+    elem.style.opacity = '0';
+    elem.style.transform = 'translateX(-50%) translateY(-100%)';
+    elem.style.transition = 'all 0.3s ease-out';
+    setTimeout(() => elem.remove(), 300);
+  }
+}
+
+function resetMeasure() {
+  measurement = { before: null, after: null, timestamp: null };
+  document.getElementById('resultPhase').classList.add('hidden');
+  document.getElementById('welcomePhase').classList.remove('hidden');
+  actionsCompleted = [];
+}
+
+// ============ HISTORY & DATA ============
+
+function loadRecords() {
+  const stored = localStorage.getItem('glucoseRecords');
+  if (stored) {
+    try {
+      allRecords = JSON.parse(stored).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    } catch (e) {
+      allRecords = [];
+    }
+  }
+  renderHistory();
+  updateStats();
+}
+
+function saveRecordsToLocal() {
+  localStorage.setItem('glucoseRecords', JSON.stringify(allRecords));
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const empty = document.getElementById('emptyHistoryMsg');
+
+  if (!allRecords.length) {
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  list.innerHTML = allRecords.map((rec, idx) => {
+    const riskInfo = getRiskInfo(rec.risk_level);
+    const date = new Date(rec.timestamp);
+    const timeStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+    
+    return `
+      <div class="rounded-xl p-4 animate-slide-in" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(251, 191, 36, 0.2);">
+        <div class="flex items-start justify-between mb-2">
+          <div>
+            <div class="flex items-baseline gap-2">
+              <p class="text-lg font-black" style="color: #fef3c7;">${rec.glucose_rise}mg/dL</p>
+              <p class="text-xs font-bold" style="color: #cbd5e1;">상승</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold px-2 py-1 rounded" style="background: ${riskInfo.color}; color: #fff;">${riskInfo.label}</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+          <div style="color: #cbd5e1;">
+            <p>식전: <span style="color: #60a5fa; font-weight: bold;">${rec.glucose_before}</span></p>
+            <p>식후: <span style="color: ${riskInfo.color}; font-weight: bold;">${rec.glucose_after}</span></p>
+          </div>
+          <div style="color: #cbd5e1;">
+            <p>${rec.meal_type}</p>
+            <p>${timeStr}</p>
+          </div>
+        </div>
+        <button onclick="requestDelete(${idx})" class="w-full py-1.5 rounded text-xs font-bold" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">삭제</button>
+      </div>
+    `;
+  }).join('');
+
+  lucide.createIcons();
+}
+
+function updateStats() {
+  if (!allRecords.length) {
+    document.getElementById('avgRise').textContent = '-- mg/dL';
+    document.getElementById('riseStatus').textContent = '--';
+    document.getElementById('achievementRate').textContent = '--%';
+    document.getElementById('totalRecords').textContent = '0';
+    return;
+  }
+
+  const avgRise = Math.round(allRecords.reduce((sum, r) => sum + r.glucose_rise, 0) / allRecords.length);
+  document.getElementById('avgRise').textContent = avgRise + ' mg/dL';
+  
+  const avgRiseStatus = avgRise > 100 ? '⚠️ 높음' : avgRise > 50 ? '🟡 중간' : '✅ 낮음';
+  document.getElementById('riseStatus').textContent = avgRiseStatus;
+
+  const achieved = allRecords.filter(r => r.glucose_after < 140).length;
+  const rate = Math.round((achieved / allRecords.length) * 100);
+  document.getElementById('achievementRate').textContent = rate + '%';
+  document.getElementById('achievementBar').style.width = rate + '%';
+
+  const riskCounts = {
+    low: allRecords.filter(r => r.risk_level === 'low').length,
+    medium: allRecords.filter(r => r.risk_level === 'medium').length,
+    high: allRecords.filter(r => r.risk_level === 'high' || r.risk_level === 'very_high').length
+  };
+  const total = allRecords.length;
+  
+  if (total > 0) {
+    const lowPct = (riskCounts.low / total) * 100;
+    const mediumPct = (riskCounts.medium / total) * 100;
+    const highPct = (riskCounts.high / total) * 100;
+
+    document.getElementById('riskLowBar').style.width = lowPct + '%';
+    document.getElementById('riskLowCount').textContent = riskCounts.low;
+    document.getElementById('riskMediumBar').style.width = mediumPct + '%';
+    document.getElementById('riskMediumCount').textContent = riskCounts.medium;
+    document.getElementById('riskHighBar').style.width = highPct + '%';
+    document.getElementById('riskHighCount').textContent = riskCounts.high;
+  }
+
+  document.getElementById('totalRecords').textContent = allRecords.length;
+
+  drawGlucoseChart();
+  drawRiseChart();
+}
+
+function requestDelete(index) {
+  deleteTarget = index;
+  if (deleteTarget !== null) document.getElementById('deleteConfirm').classList.remove('hidden');
+}
+
+function cancelDelete() {
+  deleteTarget = null;
+  document.getElementById('deleteConfirm').classList.add('hidden');
+}
+
+function confirmDelete() {
+  if (deleteTarget === null) return;
+  allRecords.splice(deleteTarget, 1);
+  saveRecordsToLocal();
+  document.getElementById('deleteConfirm').classList.add('hidden');
+  showToast('✓ 삭제됨');
+  deleteTarget = null;
+  renderHistory();
+  updateStats();
+}
+
+// ============ UI ============
+
+function toggleHistory() {
+  const hidden = document.getElementById('historyView').classList.contains('hidden');
+  document.getElementById('mainView').classList.toggle('hidden', !hidden);
+  document.getElementById('historyView').classList.toggle('hidden', hidden);
+}
+
+function toggleStats() {
+  const hidden = document.getElementById('statsView').classList.contains('hidden');
+  document.getElementById('mainView').classList.toggle('hidden', !hidden);
+  document.getElementById('statsView').classList.toggle('hidden', hidden);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  setTimeout(() => t.classList.add('hidden'), 2000);
+}
+
+// Element SDK
+window.elementSdk.init({
+  defaultConfig,
+  async onConfigChange(config) {
+    document.getElementById('appTitle').textContent = config.app_title || defaultConfig.app_title;
+  },
+  mapToCapabilities(config) {
+    return { recolorables: [], borderables: [], fontEditable: undefined, fontSizeable: undefined };
+  },
+  mapToEditPanelValues(config) {
+    return new Map([['app_title', config.app_title || defaultConfig.app_title]]);
+  }
+});
+
+// 그래프 그리기
+function drawGlucoseChart() {
+  const canvas = document.getElementById('glucoseChart');
+  if (!canvas) return;
+  
+  const container = canvas.parentElement;
+  canvas.width = container.offsetWidth;
+  canvas.height = container.offsetHeight;
+  
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+  
+  const data = allRecords.slice(0, 10).reverse();
+  
+  if (data.length === 0) {
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('데이터 없음', width / 2, height / 2);
+    return;
+  }
+  
+  const padding = 30;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
+  const minGlucose = 60;
+  const maxGlucose = 200;
+  const range = maxGlucose - minGlucose;
+  
+  // 그리드
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = padding + (chartHeight / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding, y);
+    ctx.lineTo(width - padding, y);
+    ctx.stroke();
+  }
+  
+  // 축
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding, height - padding);
+  ctx.lineTo(width - padding, height - padding);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(padding, padding);
+  ctx.lineTo(padding, height - padding);
+  ctx.stroke();
+  
+  // Y축 라벨
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const value = minGlucose + (range / 4) * i;
+    const y = height - padding - (chartHeight / 4) * i;
+    ctx.fillText(Math.round(value), padding - 8, y + 3);
+  }
+  
+  // 목표선 (140)
+  const targetY = height - padding - ((140 - minGlucose) / range) * chartHeight;
+  ctx.strokeStyle = '#22c55e';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(padding, targetY);
+  ctx.lineTo(width - padding, targetY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  const pointSpacing = data.length > 1 ? chartWidth / (data.length - 1) : chartWidth / 2;
+  
+  // 식전 라인
+  ctx.strokeStyle = '#60a5fa';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  data.forEach((rec, i) => {
+    const x = padding + i * pointSpacing;
+    const y = height - padding - ((rec.glucose_before - minGlucose) / range) * chartHeight;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  
+  // 식후 라인
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  data.forEach((rec, i) => {
+    const x = padding + i * pointSpacing;
+    const y = height - padding - ((rec.glucose_after - minGlucose) / range) * chartHeight;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  
+  // 점 표시
+  data.forEach((rec, i) => {
+    const x = padding + i * pointSpacing;
+    
+    const y1 = height - padding - ((rec.glucose_before - minGlucose) / range) * chartHeight;
+    ctx.fillStyle = '#60a5fa';
+    ctx.beginPath();
+    ctx.arc(x, y1, 3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    const y2 = height - padding - ((rec.glucose_after - minGlucose) / range) * chartHeight;
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(x, y2, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function drawRiseChart() {
+  const canvas = document.getElementById('riseChart');
+  if (!canvas) return;
+  
+  const container = canvas.parentElement;
+  canvas.width = container.offsetWidth;
+  canvas.height = container.offsetHeight;
+  
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+  
+  const data = allRecords.slice(0, 10).reverse();
+  
+  if (data.length === 0) {
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('데이터 없음', width / 2, height / 2);
+    return;
+  }
+  
+  const padding = 30;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
+  const spacing = chartWidth / data.length;
+  const barWidth = spacing * 0.6;
+  const maxRise = Math.max(...data.map(r => r.glucose_rise), 100);
+  
+  // 그리드
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = padding + (chartHeight / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding, y);
+    ctx.lineTo(width - padding, y);
+    ctx.stroke();
+  }
+  
+  // 축
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding, height - padding);
+  ctx.lineTo(width - padding, height - padding);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(padding, padding);
+  ctx.lineTo(padding, height - padding);
+  ctx.stroke();
+  
+  // Y축 라벨
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const value = (maxRise / 4) * i;
+    const y = height - padding - (chartHeight / 4) * i;
+    ctx.fillText(Math.round(value), padding - 8, y + 3);
+  }
+  
+  // 목표선 (50)
+  const targetY = height - padding - (50 / maxRise) * chartHeight;
+  ctx.strokeStyle = '#22c55e';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(padding, targetY);
+  ctx.lineTo(width - padding, targetY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // 바 그리기
+  data.forEach((rec, i) => {
+    const x = padding + i * spacing + spacing / 2 - barWidth / 2;
+    const barHeight = (rec.glucose_rise / maxRise) * chartHeight;
+    const y = height - padding - barHeight;
+    
+    let color = '#22c55e';
+    if (rec.glucose_rise > 100) color = '#ef4444';
+    else if (rec.glucose_rise > 50) color = '#f59e0b';
+    
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, barWidth, barHeight);
+  });
+}
+
+loadRecords();
+lucide.createIcons();
+ </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e23e886855ee9f9',t:'MTc3NDUwNDU0Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html> 마지막
