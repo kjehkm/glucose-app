@@ -30,26 +30,26 @@
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
  </head>
  <body class="h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-  <div id="app" class="h-full w-full overflow-auto flex flex-col"><!-- Header -->
+  <div id="app" class="h-full w-full overflow-auto flex flex-col">
+   <!-- Header -->
    <header class="sticky top-0 z-20 px-5 py-4 bg-gradient-to-b from-slate-900/95 to-slate-900/50 backdrop-blur-md border-b border-amber-600/20">
     <div class="flex items-center justify-between mb-2">
      <h1 id="appTitle" class="text-2xl font-bold" style="color: #fbbf24;">혈당 관리</h1>
-     <div class="flex gap-2"><button onclick="toggleHistory()" class="p-2.5 rounded-lg transition-colors" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;"> <i data-lucide="history" style="width:18px;height:18px;"></i> </button> <button onclick="toggleStats()" class="p-2.5 rounded-lg transition-colors" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;"> <i data-lucide="bar-chart-2" style="width:18px;height:18px;"></i> </button>
+     <div class="flex gap-2">
+      <button onclick="toggleHistory()" class="p-2.5 rounded-lg transition-colors hover:scale-110" title="측정 기록" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;"> <i data-lucide="history" style="width:18px;height:18px;"></i> </button> <button onclick="toggleStats()" class="p-2.5 rounded-lg transition-colors hover:scale-110" title="📊 통계 및 그래프" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;"> <i data-lucide="bar-chart-2" style="width:18px;height:18px;"></i> </button>
      </div>
     </div>
     <p class="text-xs" style="color: #cbd5e1;">식전 혈당 입력 → 식사하기 → 2시간 후 식후 측정</p>
    </header><!-- Main View -->
    <div class="sticky top-16 z-10 px-5 py-3 bg-gradient-to-b from-slate-900/80 to-slate-900/30 backdrop-blur-sm border-b border-amber-600/10 space-y-2">
     <p class="text-xs font-bold" style="color: #f59e0b;">오늘의 건강 습관</p>
-    <div class="flex gap-2 overflow-x-auto pb-1">
-     <button onclick="logHabitAction('water')" class="flex-shrink-0 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6;">💧 물 마시기</button> <button onclick="logHabitAction('walk')" class="flex-shrink-0 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap" style="background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e;">🚶 산책</button> <button onclick="logHabitAction('stretch')" class="flex-shrink-0 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap" style="background: rgba(168, 85, 247, 0.2); color: #a855f7; border: 1px solid #a855f7;">🧘 스트레칭</button> <button onclick="logHabitAction('sleep')" class="flex-shrink-0 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6; border: 1px solid #8b5cf6;">😴 충분한 수면</button>
+    <div class="flex gap-2 overflow-x-auto pb-1"><button onclick="logHabitAction('water')" class="flex-shrink-0 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6;">💧 물 마시기</button> <button onclick="logHabitAction('walk')" class="flex-shrink-0 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap" style="background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e;">🚶 산책</button> <button onclick="logHabitAction('stretch')" class="flex-shrink-0 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap" style="background: rgba(168, 85, 247, 0.2); color: #a855f7; border: 1px solid #a855f7;">🧘 스트레칭</button> <button onclick="logHabitAction('sleep')" class="flex-shrink-0 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6; border: 1px solid #8b5cf6;">😴 충분한 수면</button>
     </div>
     <div id="habitCount" class="text-xs" style="color: #cbd5e1;">
      오늘 실천: 0개
     </div>
    </div>
-   <div id="mainView" class="flex-1 overflow-auto px-5 py-6 pb-8">
-    <!-- Welcome Screen -->
+   <div id="mainView" class="flex-1 overflow-auto px-5 py-6 pb-8"><!-- Welcome Screen -->
     <div id="welcomePhase" class="space-y-4">
      <div class="rounded-2xl p-8 text-center animate-fade-up" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%); border: 2px solid #fbbf24;">
       <div class="text-6xl mb-4 animate-pulse-strong">
@@ -57,23 +57,20 @@
       </div>
       <h2 class="text-2xl font-bold mb-2" style="color: #fef3c7;">혈당 측정</h2>
       <p class="text-sm mb-6" style="color: #cbd5e1;">식전 혈당을 입력하세요</p>
-      <div class="flex gap-3"><button onclick="startNFCRead()" class="flex-1 py-4 px-6 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all active:scale-95" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff;"> <i data-lucide="smartphone" style="width:24px;height:24px;"></i> NFC 읽기 </button> <button onclick="showInputPhase()" class="flex-1 py-4 px-6 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all active:scale-95" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #000;"> <i data-lucide="plus-circle" style="width:24px;height:24px;"></i> 수동 입력 </button>
+      <div class="flex gap-3">
+       <button onclick="startNFCRead()" class="flex-1 py-4 px-6 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all active:scale-95" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff;"> <i data-lucide="smartphone" style="width:24px;height:24px;"></i> NFC 읽기 </button> <button onclick="showInputPhase()" class="flex-1 py-4 px-6 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all active:scale-95" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #000;"> <i data-lucide="plus-circle" style="width:24px;height:24px;"></i> 수동 입력 </button>
       </div>
      </div>
      <div class="rounded-2xl p-5" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(251, 191, 36, 0.2);">
       <p class="text-xs font-bold mb-3" style="color: #f59e0b;">📋 측정 순서</p>
       <div class="space-y-2 text-xs" style="color: #cbd5e1;">
-       <div class="flex items-start gap-2">
-        <span style="color: #fbbf24;">1️⃣</span> <span><strong>식전:</strong> 식사 직전 혈당 측정 입력</span>
+       <div class="flex items-start gap-2"><span style="color: #fbbf24;">1️⃣</span> <span><strong>식전:</strong> 식사 직전 혈당 측정 입력</span>
        </div>
-       <div class="flex items-start gap-2">
-        <span style="color: #fbbf24;">2️⃣</span> <span><strong>식사:</strong> 뭐든 자유롭게 드세요</span>
+       <div class="flex items-start gap-2"><span style="color: #fbbf24;">2️⃣</span> <span><strong>식사:</strong> 뭐든 자유롭게 드세요</span>
        </div>
-       <div class="flex items-start gap-2">
-        <span style="color: #fbbf24;">3️⃣</span> <span><strong>식후:</strong> 2시간 후 알림 → 혈당 측정</span>
+       <div class="flex items-start gap-2"><span style="color: #fbbf24;">3️⃣</span> <span><strong>식후:</strong> 2시간 후 알림 → 혈당 측정</span>
        </div>
-       <div class="flex items-start gap-2">
-        <span style="color: #fbbf24;">🎯</span> <span><strong>목표:</strong> 식후 혈당 &lt; 140 mg/dL</span>
+       <div class="flex items-start gap-2"><span style="color: #fbbf24;">🎯</span> <span><strong>목표:</strong> 식후 혈당 &lt; 140 mg/dL</span>
        </div>
       </div>
      </div>
@@ -81,9 +78,11 @@
     <div id="inputPhase" class="hidden space-y-4">
      <div class="rounded-2xl p-6 animate-fade-up" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%); border: 2px solid #fbbf24;">
       <h2 class="text-xl font-bold mb-6" style="color: #fef3c7;">🩸 식전 혈당 입력</h2>
-      <div class="mb-6"><label class="block text-sm font-bold mb-2" style="color: #cbd5e1;">식전 혈당 (mg/dL)</label> <input type="number" id="inputBefore" min="40" max="300" value="95" class="w-full px-4 py-3 rounded-lg text-center text-2xl font-bold" style="background: rgba(0,0,0,0.3); border: 2px solid #60a5fa; color: #60a5fa;">
+      <div class="mb-6">
+       <label class="block text-sm font-bold mb-2" style="color: #cbd5e1;">식전 혈당 (mg/dL)</label> <input type="number" id="inputBefore" min="40" max="300" value="95" class="w-full px-4 py-3 rounded-lg text-center text-2xl font-bold" style="background: rgba(0,0,0,0.3); border: 2px solid #60a5fa; color: #60a5fa;">
       </div>
-      <div class="flex gap-3"><button onclick="cancelInput()" class="flex-1 py-3 rounded-lg font-bold" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">취소</button> <button onclick="submitBeforeMeal()" class="flex-1 py-3 rounded-lg font-bold" style="background: #60a5fa; color: #fff;">다음 → 식사하기</button>
+      <div class="flex gap-3">
+       <button onclick="cancelInput()" class="flex-1 py-3 rounded-lg font-bold" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">취소</button> <button onclick="submitBeforeMeal()" class="flex-1 py-3 rounded-lg font-bold" style="background: #60a5fa; color: #fff;">다음 → 식사하기</button>
       </div>
      </div>
     </div><!-- Meal Phase -->
@@ -97,7 +96,8 @@
        ⏰ 식사 시작: <span id="mealStartDisplay">--:--</span><br>
         📍 2시간 후 알림을 받을 예정입니다
       </div>
-      <div class="flex gap-3"><button onclick="cancelMealPhase()" class="flex-1 py-3 rounded-lg font-bold" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">돌아가기</button> <button onclick="confirmMealPhase()" class="flex-1 py-3 rounded-lg font-bold" style="background: #fbbf24; color: #000;">식사 시작 ✓</button>
+      <div class="flex gap-3">
+       <button onclick="cancelMealPhase()" class="flex-1 py-3 rounded-lg font-bold" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">돌아가기</button> <button onclick="confirmMealPhase()" class="flex-1 py-3 rounded-lg font-bold" style="background: #fbbf24; color: #000;">식사 시작 ✓</button>
       </div>
      </div>
     </div><!-- After Phase -->
@@ -108,9 +108,11 @@
        ✓ 식전 혈당: <span id="afterDisplayBefore">--</span> mg/dL<br>
         경과 시간: <span id="elapsedTime">0분</span>
       </div>
-      <div class="mb-6"><label class="block text-sm font-bold mb-2" style="color: #cbd5e1;">식후 혈당 (mg/dL)</label> <input type="number" id="inputAfter" min="40" max="400" value="145" class="w-full px-4 py-3 rounded-lg text-center text-2xl font-bold" style="background: rgba(0,0,0,0.3); border: 2px solid #ef4444; color: #ef4444;">
+      <div class="mb-6">
+       <label class="block text-sm font-bold mb-2" style="color: #cbd5e1;">식후 혈당 (mg/dL)</label> <input type="number" id="inputAfter" min="40" max="400" value="145" class="w-full px-4 py-3 rounded-lg text-center text-2xl font-bold" style="background: rgba(0,0,0,0.3); border: 2px solid #ef4444; color: #ef4444;">
       </div>
-      <div class="flex gap-3"><button onclick="cancelAfterPhase()" class="flex-1 py-3 rounded-lg font-bold" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">돌아가기</button> <button onclick="submitAfterMeal()" class="flex-1 py-3 rounded-lg font-bold" style="background: #fbbf24; color: #000;">분석하기</button>
+      <div class="flex gap-3">
+       <button onclick="cancelAfterPhase()" class="flex-1 py-3 rounded-lg font-bold" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">돌아가기</button> <button onclick="submitAfterMeal()" class="flex-1 py-3 rounded-lg font-bold" style="background: #fbbf24; color: #000;">분석하기</button>
       </div>
      </div>
     </div><!-- NFC Reading -->
@@ -126,11 +128,9 @@
     <div id="nfcConfirmPhase" class="hidden space-y-4">
      <div class="rounded-2xl p-6 animate-fade-up" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%); border: 2px solid #3b82f6;">
       <h2 class="text-xl font-bold mb-6" style="color: #fef3c7;">📱 NFC 식전 혈당</h2>
-      <div class="mb-6">
-       <label class="block text-sm font-bold mb-2" style="color: #cbd5e1;">🩸 식전 혈당 (mg/dL)</label> <input type="number" id="nfcBefore" min="40" max="300" class="w-full px-4 py-3 rounded-lg text-center text-2xl font-bold" style="background: rgba(0,0,0,0.3); border: 2px solid #60a5fa; color: #60a5fa;">
+      <div class="mb-6"><label class="block text-sm font-bold mb-2" style="color: #cbd5e1;">🩸 식전 혈당 (mg/dL)</label> <input type="number" id="nfcBefore" min="40" max="300" class="w-full px-4 py-3 rounded-lg text-center text-2xl font-bold" style="background: rgba(0,0,0,0.3); border: 2px solid #60a5fa; color: #60a5fa;">
       </div>
-      <div class="flex gap-3">
-       <button onclick="cancelNFCConfirm()" class="flex-1 py-3 rounded-lg font-bold" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa;">취소</button> <button onclick="confirmNFCData()" class="flex-1 py-3 rounded-lg font-bold" style="background: #3b82f6; color: #fff;">다음 → 식사하기</button>
+      <div class="flex gap-3"><button onclick="cancelNFCConfirm()" class="flex-1 py-3 rounded-lg font-bold" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa;">취소</button> <button onclick="confirmNFCData()" class="flex-1 py-3 rounded-lg font-bold" style="background: #3b82f6; color: #fff;">다음 → 식사하기</button>
       </div>
      </div>
     </div><!-- Result Analysis -->
@@ -141,8 +141,7 @@
         <p class="text-xs font-bold mb-1" style="color: #cbd5e1;">식전</p>
         <p class="text-2xl font-black" id="glucoseBefore" style="color: #60a5fa;">--</p>
        </div>
-       <div class="flex items-center justify-center">
-        <i data-lucide="arrow-right" style="width:24px;height:24px;color:#ef4444;"></i>
+       <div class="flex items-center justify-center"><i data-lucide="arrow-right" style="width:24px;height:24px;color:#ef4444;"></i>
        </div>
        <div class="rounded-xl p-3" style="background: rgba(255,255,255,0.03);">
         <p class="text-xs font-bold mb-1" style="color: #cbd5e1;">식후</p>
@@ -165,18 +164,21 @@
       <p id="categoryText" class="text-sm" style="color: #fef3c7;"></p>
      </div>
      <div id="exerciseRecommendation" class="rounded-xl p-5 animate-fade-up" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%); border: 2px solid #3b82f6;">
-      <div class="flex items-start gap-3 mb-3"><span style="font-size: 28px;" id="exerciseIcon">🏃</span>
+      <div class="flex items-start gap-3 mb-3">
+       <span style="font-size: 28px;" id="exerciseIcon">🏃</span>
        <div class="flex-1">
         <p class="font-bold mb-1" style="color: #fbbf24;" id="exerciseType">운동 추천</p>
         <p class="text-xs mb-2" style="color: #cbd5e1;" id="exerciseDuration">--</p>
         <p class="text-xs mb-3" style="color: #e0e7ff;" id="exerciseDetail">--</p>
-        <div class="flex gap-2"><span class="text-xs px-2 py-1 rounded" style="background: rgba(59, 130, 246, 0.3); color: #60a5fa;">⏱ <span id="exerciseTiming">--</span></span> <span class="text-xs px-2 py-1 rounded" style="background: rgba(59, 130, 246, 0.3); color: #60a5fa;">💪 <span id="exerciseIntensity">--</span></span>
+        <div class="flex gap-2">
+         <span class="text-xs px-2 py-1 rounded" style="background: rgba(59, 130, 246, 0.3); color: #60a5fa;">⏱ <span id="exerciseTiming">--</span></span> <span class="text-xs px-2 py-1 rounded" style="background: rgba(59, 130, 246, 0.3); color: #60a5fa;">💪 <span id="exerciseIntensity">--</span></span>
         </div>
        </div>
       </div>
      </div>
      <div id="dietRecommendation" class="rounded-xl p-5 animate-fade-up" style="background: linear-gradient(135deg, rgba(251, 146, 60, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%); border: 2px solid #fb923c;">
-      <div class="flex items-start gap-3"><span style="font-size: 28px;">🥗</span>
+      <div class="flex items-start gap-3">
+       <span style="font-size: 28px;">🥗</span>
        <div class="flex-1">
         <p class="font-bold mb-1" style="color: #fbbf24;" id="dietType">식단 추천</p>
         <p class="text-xs mb-2" style="color: #e0e7ff;" id="dietReduction">30-40% 감소 권장</p>
@@ -296,7 +298,8 @@
   <div id="deleteConfirm" class="fixed inset-0 z-40 hidden flex items-center justify-center" style="background: rgba(0,0,0,0.8);">
    <div class="rounded-2xl p-6 mx-6 w-full max-w-xs animate-fade-up" style="background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border: 2px solid #fbbf24;">
     <p class="text-sm font-bold mb-4" style="color: #fef3c7;">이 기록을 삭제하시겠습니까?</p>
-    <div class="flex gap-3"><button onclick="cancelDelete()" class="flex-1 py-2.5 rounded-lg font-bold text-sm" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">취소</button> <button onclick="confirmDelete()" class="flex-1 py-2.5 rounded-lg font-bold text-sm" style="background: #ef4444; color: #fff;">삭제</button>
+    <div class="flex gap-3">
+     <button onclick="cancelDelete()" class="flex-1 py-2.5 rounded-lg font-bold text-sm" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24;">취소</button> <button onclick="confirmDelete()" class="flex-1 py-2.5 rounded-lg font-bold text-sm" style="background: #ef4444; color: #fff;">삭제</button>
     </div>
    </div>
   </div><!-- Toast -->
@@ -482,12 +485,17 @@ function confirmNFCData() {
 function showInputPhase() {
   document.getElementById('welcomePhase').classList.add('hidden');
   document.getElementById('inputPhase').classList.remove('hidden');
-  document.getElementById('inputBefore').value = '95';
+  // 식전 혈당 랜덤 예시 (80~130)
+  const randomBefore = Math.floor(Math.random() * 51) + 80;
+  document.getElementById('inputBefore').value = randomBefore;
+  document.getElementById('inputBefore').focus();
+  setTimeout(() => document.getElementById('inputBefore').select(), 50);
 }
 
 function cancelInput() {
   document.getElementById('inputPhase').classList.add('hidden');
   document.getElementById('welcomePhase').classList.remove('hidden');
+  measurement = { before: null, after: null, timestamp: null };
 }
 
 function submitBeforeMeal() {
@@ -525,7 +533,9 @@ function cancelMealPhase() {
 function confirmMealPhase() {
   document.getElementById('mealPhase').classList.add('hidden');
   document.getElementById('afterDisplayBefore').textContent = measurement.before;
-  document.getElementById('inputAfter').value = '145';
+  // 식후 혈당 랜덤 예시 (식전 + 30~90 범위)
+  const randomAfter = measurement.before + Math.floor(Math.random() * 61) + 30;
+  document.getElementById('inputAfter').value = randomAfter;
   
   clearInterval(updateElapsedTimeInterval);
   updateElapsedTimeInterval = setInterval(() => {
@@ -965,15 +975,41 @@ function confirmDelete() {
 // ============ UI ============
 
 function toggleHistory() {
-  const hidden = document.getElementById('historyView').classList.contains('hidden');
-  document.getElementById('mainView').classList.toggle('hidden', !hidden);
-  document.getElementById('historyView').classList.toggle('hidden', hidden);
+  const historyView = document.getElementById('historyView');
+  const mainView = document.getElementById('mainView');
+  const statsView = document.getElementById('statsView');
+  
+  const isHidden = historyView.classList.contains('hidden');
+  
+  if (isHidden) {
+    historyView.classList.remove('hidden');
+    mainView.classList.add('hidden');
+    statsView.classList.add('hidden');
+  } else {
+    historyView.classList.add('hidden');
+    mainView.classList.remove('hidden');
+  }
 }
 
 function toggleStats() {
-  const hidden = document.getElementById('statsView').classList.contains('hidden');
-  document.getElementById('mainView').classList.toggle('hidden', !hidden);
-  document.getElementById('statsView').classList.toggle('hidden', hidden);
+  const statsView = document.getElementById('statsView');
+  const mainView = document.getElementById('mainView');
+  const historyView = document.getElementById('historyView');
+  
+  const isHidden = statsView.classList.contains('hidden');
+  
+  if (isHidden) {
+    statsView.classList.remove('hidden');
+    mainView.classList.add('hidden');
+    historyView.classList.add('hidden');
+    setTimeout(() => {
+      drawGlucoseChart();
+      drawRiseChart();
+    }, 50);
+  } else {
+    statsView.classList.add('hidden');
+    mainView.classList.remove('hidden');
+  }
 }
 
 function showToast(msg) {
@@ -1003,12 +1039,12 @@ function drawGlucoseChart() {
   if (!canvas) return;
   
   const container = canvas.parentElement;
-  canvas.width = container.offsetWidth;
-  canvas.height = container.offsetHeight;
+  const width = container.offsetWidth || 300;
+  const height = container.offsetHeight || 200;
+  canvas.width = width;
+  canvas.height = height;
   
   const ctx = canvas.getContext('2d');
-  const width = canvas.width;
-  const height = canvas.height;
   
   const data = allRecords.slice(0, 10).reverse();
   
@@ -1206,5 +1242,5 @@ function drawRiseChart() {
 loadRecords();
 lucide.createIcons();
  </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e23e886855ee9f9',t:'MTc3NDUwNDU0Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
-</html> 마지막
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e244633a231ea91',t:'MTc3NDUwODM4My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
